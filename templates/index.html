@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#172c27">
+  <meta name="author" content="Giovani Oliveira">
+  <title>Card Scanner · Pokémon TCG</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='webcam.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='layout.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='webcam.js') }}" defer></script>
+</head>
+<body>
+  <header><a class="brand" href="/" aria-label="Página inicial"><span class="brand-icon">◈</span> CARD SCANNER <span class="tag">TCG</span></a><div class="header-actions"><span class="local">● Servidor local</span><button id="open-help" type="button" class="text-button">Guia de uso</button></div></header>
+  <main>
+    <section class="intro"><h1>Scanner de cards Pokémon</h1><p>Leia, confira e acompanhe sua lista na mesma tela.</p></section>
+    <div class="workspace">
+      <section class="panel capture-panel" aria-labelledby="capture-title">
+        <div class="section-heading"><span class="step">01</span><h2 id="capture-title">Leia seus cards</h2></div>
+        <div class="source-switch" role="group" aria-label="Origem da imagem"><button id="source-file" class="button primary" type="button" aria-pressed="true">Arquivo de foto</button><button id="source-webcam" class="button secondary" type="button" aria-pressed="false">Usar webcam</button></div>
+        <div id="file-controls">
+        <div id="photo-stage" class="photo-stage"><div id="placeholder"><div class="card-outline"><span>✦</span><i></i><i></i></div><p>Um card por vez, de frente<br>e com boa iluminação.</p></div><img id="preview" alt="Prévia da foto selecionada" hidden></div>
+        <div class="photo-tools"><button id="rotate" class="text-button" type="button" disabled>↻ Girar foto</button><span>JPG, PNG ou WebP</span></div>
+        <div class="capture-actions"><label class="button primary" for="camera" {% if not network_access %}hidden{% endif %}>◎ &nbsp; Fotografar card</label><input id="camera" class="visually-hidden" type="file" accept="image/*" capture="environment" {% if not network_access %}tabindex="-1"{% endif %}><label class="button {{ 'secondary' if network_access else 'primary' }}" for="gallery">Escolher foto</label><input id="gallery" class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp"></div>
+        </div>
+        <div id="webcam-controls" hidden>
+          <label class="field-label" for="webcam-device">Webcam do computador</label>
+          <div class="webcam-picker"><select id="webcam-device" disabled><option value="">Ative a webcam para listar as câmeras</option></select><button id="refresh-webcams" type="button" class="button secondary">Atualizar</button></div>
+          <div class="webcam-stage"><video id="webcam-video" autoplay muted playsinline hidden aria-label="Prévia ao vivo da webcam"></video><div id="webcam-guide" hidden aria-hidden="true"></div><p id="webcam-placeholder">Ative a webcam e posicione o card dentro da moldura.</p></div>
+          <div class="webcam-buttons webcam-activation"><button id="open-webcam" type="button" class="button primary">Ativar webcam</button><button id="capture-webcam" type="button" class="button secondary" disabled>Capturar uma vez</button><button id="close-webcam" type="button" class="button secondary" disabled>Desligar</button></div>
+          <p id="webcam-status" class="privacy" role="status" aria-live="polite">Autorize o acesso à câmera. O celular aparecerá quando estiver disponível como webcam no Windows.</p>
+          <details class="webcam-options"><summary>Opções da leitura e som</summary>
+          <label class="field-label" for="scan-delay">Pausa entre as leituras</label><select id="scan-delay"><option value="2000">2 segundos</option><option value="2500" selected>2,5 segundos</option><option value="3000">3 segundos</option></select>
+          <label class="webcam-check"><input id="avoid-stationary" type="checkbox" checked> Evitar contar novamente o mesmo card parado</label>
+          <label class="webcam-check"><input id="beep-enabled" type="checkbox" checked> Bip ao salvar um card na lista</label><button id="test-beep" type="button" class="text-button">Testar bip</button>
+          <p class="privacy">Para outra cópia igual com a proteção ativada, retire o card e aguarde “Área livre”.</p></details>
+          <div class="webcam-buttons"><button id="start-continuous" type="button" class="button primary" disabled>Iniciar leitura contínua</button><button id="stop-continuous" type="button" class="button secondary" disabled>Parar</button></div>
+        </div>
+        <div class="capture-settings"><div><label class="field-label" for="language">Idioma do card</label><select id="language"><option value="pt">Português</option><option value="en">Inglês</option></select></div><div><label class="field-label" for="scan-quantity">Cópias por leitura</label><input id="scan-quantity" type="number" min="1" max="999" value="1"></div></div>
+        <div class="scan-settings"><p class="privacy" id="scan-destination">Preparando a lista ativa…</p><label class="check-label"><input id="auto-add" type="checkbox" checked> Adicionar automaticamente à lista ativa</label></div>
+        <button class="button scan" id="scan" type="button" disabled>Ler e acrescentar à lista <span>→</span></button>
+      </section>
+      <section class="panel results-panel" aria-labelledby="result-title">
+        <div class="section-heading"><span class="step">02</span><h2 id="result-title">Reconhecimento</h2></div>
+        <p id="status" role="status" aria-live="polite">Tudo pronto para a primeira leitura.</p>
+        <div id="empty" class="empty"><span>⌕</span><h3>Cada card tem uma história.</h3><p>Fotografe para começar ou procure pelo nome abaixo.</p></div>
+        <div id="results" class="results"></div>
+        <details id="ocr-section" hidden><summary>Ver texto reconhecido</summary><pre id="ocr-text"></pre></details>
+        <details class="manual" open><summary>Buscar por nome, coleção e número</summary><form id="search-form"><label for="name">Nome do card</label><input id="name" placeholder="Ex.: Charizard ex" minlength="3" maxlength="100" required><label for="set-code">Código da coleção <span>(opcional)</span></label><input id="set-code" placeholder="Ex.: OBF" maxlength="40"><label for="number">Número <span>(opcional)</span></label><div class="search-row"><input id="number" placeholder="Ex.: 125 ou 125/197" maxlength="20"><button class="button secondary" id="search" type="submit">Buscar</button></div></form></details>
+      </section>
+    <section class="panel list-panel" aria-labelledby="list-title">
+      <div class="section-heading"><span class="step">03</span><h2 id="list-title">Minhas listas</h2><span id="list-total" class="tag">0 cards</span></div>
+      <div class="list-toolbar"><div class="list-picker"><label for="active-list">Lista que recebe os cards</label><select id="active-list" disabled><option>Carregando listas…</option></select></div><button id="rename-list" type="button" class="button secondary" disabled>Renomear</button><button id="delete-list" type="button" class="button secondary danger" disabled>Apagar lista</button></div>
+      <form id="new-list-form" class="new-list-form"><label class="visually-hidden" for="new-list-name">Nome da nova lista</label><input id="new-list-name" placeholder="Nome da nova lista ou deck" maxlength="80" required><button id="new-list" type="submit" class="button secondary">Criar lista</button></form>
+      <p id="list-status" class="privacy" role="status" aria-live="polite">As listas ficam salvas neste computador.</p>
+      <div id="list-items" class="list-items"></div>
+      <div class="export-toolbar"><label for="export-format">Formato de exportação</label><select id="export-format"><option value="tcglive">TCG Live / Limitless</option><option value="liga">Liga Pokémon (procura de cartas)</option></select><button id="download-list" type="button" class="button primary" disabled>Baixar .txt</button><button id="copy-list" type="button" class="button secondary" disabled>Copiar lista</button></div>
+    </section>
+    </div>
+  </main>
+  <footer><strong>Desenvolvido por Giovani Oliveira</strong><span>Projeto independente · Catálogo: TCGdex · Pokémon pertence aos respectivos titulares.</span></footer>
+  <dialog id="help-dialog"><button id="close-help" class="text-button close" type="button">Fechar ✕</button><h2>Guia de uso</h2><p>Escolha Arquivo de foto ou Usar webcam, selecione a lista e leia os cards. A inclusão automática depende de confirmar nome, número e coleção.</p><p>Na leitura contínua, o bip confirma uma inclusão. A pausa e a proteção contra repetição ficam em Opções da leitura e som.</p><p>A leitura da foto acontece neste computador. O catálogo e as imagens de referência são consultados na internet.</p><p>TCG Live / Limitless usa nomes em inglês e códigos de coleção. Liga Pokémon usa quantidade, nome e numeração completa: 4 Dragapult ex (130/167) ou 4 Binacle (087/∞). A aceitação no jogo ou torneio depende das cartas e das regras do formato.</p>
+    <aside class="tips"><div><strong>Enquadre o card inteiro</strong><p>Deixe o nome e o número do rodapé bem visíveis.</p></div><div><strong>Evite reflexos e sombras</strong><p>Luz suave ajuda a ler até as letras menores.</p></div>{% if network_access %}<details class="phone-access"><summary>Abrir no celular ↗</summary><p>Conecte o celular ao mesmo Wi-Fi do computador e escaneie:</p><img src="/qr.png" alt="QR code com endereço do aplicativo na rede local" width="150" height="150"><a id="access-url" href="#">Carregando endereço…</a></details>{% else %}<div><strong>Uso somente neste computador</strong><p>Escolha um arquivo ou use uma webcam disponível no Windows. O aplicativo não precisa receber conexões de outros dispositivos.</p></div>{% endif %}</aside>
+  </dialog>
+  <dialog id="detail-dialog"><button id="close-dialog" class="text-button close" aria-label="Fechar detalhes">Fechar ✕</button><div id="detail-content"></div></dialog>
+</body>
+</html>

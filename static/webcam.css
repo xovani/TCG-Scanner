@@ -1,0 +1,19 @@
+.source-switch{display:flex;gap:9px;margin-bottom:18px}
+.source-switch .button{flex:1}
+.webcam-picker{display:flex;gap:8px;margin-bottom:14px}
+.webcam-picker select{min-width:0;flex:1}
+.webcam-picker .button{flex-shrink:0;padding:10px}
+.webcam-stage{position:relative;background:#15241e;overflow:hidden;border-radius:12px}
+.webcam-stage:has(#webcam-placeholder:not([hidden])){height:260px}
+#webcam-video{display:block;width:100%;height:auto}
+#webcam-placeholder{position:absolute;inset:0;display:grid;place-content:center;text-align:center;padding:30px;color:#d6e1cf;font-size:13px;line-height:1.7;margin:0}
+#webcam-guide{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border:2px solid #d8ed9a;border-radius:8px;box-shadow:0 0 0 100vmax #0007;pointer-events:none}
+.webcam-buttons{display:flex;gap:9px;margin-top:14px}
+.webcam-buttons .button{flex:1}
+#capture-webcam{width:100%;margin-top:14px}
+.webcam-check{display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.6;margin-top:14px}
+.webcam-check input{width:auto;flex-shrink:0;margin-top:4px;accent-color:var(--green)}
+#test-beep{font-size:12px;margin-top:8px}
+#webcam-status{min-height:38px;line-height:1.7}
+#webcam-controls>.field-label:first-child{margin-top:0}
+@media(max-width:400px){.webcam-buttons .button{padding:10px 8px;font-size:12px}.source-switch .button{padding:10px}}

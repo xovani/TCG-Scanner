@@ -1,0 +1,2 @@
+# Opcional: teste da interface usando Google Chrome já instalado (sem baixar navegador).
+playwright>=1.50,<2
